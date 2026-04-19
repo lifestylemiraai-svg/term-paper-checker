@@ -45,7 +45,7 @@ if api_key:
                 st.write(response.text)
 else:
     st.warning("Please enter your Gemini API Key in the sidebar to start.")
-              st.divider()
+    st.divider()
 st.subheader("💡 Quick Tool: Footnote ↔ Bibliography")
 cite_input = st.text_input("Paste a citation here:")
 if cite_input:
