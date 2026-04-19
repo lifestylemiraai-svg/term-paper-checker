@@ -1,54 +1,43 @@
 import streamlit as st
-import fitz  # PyMuPDF
+import fitz
 import google.generativeai as genai
 
-# 1. Setup - Replace with your key or use secrets
-api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
+st.set_page_config(page_title="CMS 17 Guardian", layout="centered")
 
-if api_key:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+with st.sidebar:
+    st.title("Settings")
+    api_key = st.text_input("Enter Gemini API Key", type="password")
+    st.info("Get a free key at aistudio.google.com")
 
-    st.title("🎓 The CMS 17 Guardian")
-    st.info("Upload your paper. I'll find the Chicago Style errors you missed.")
+st.title("🎓 Chicago Style 17 Guardian")
 
-    uploaded_file = st.file_uploader("Upload Term Paper (PDF)", type="pdf")
-
-    if uploaded_file:
-        # Extract text from PDF
-        with fitz.open(stream=uploaded_file.read(), filetype="pdf") as doc:
-            text = ""
-            for page in doc:
-                text += page.get_text()
-
-        if st.button("Audit My Paper"):
-            with st.spinner("Analyzing minute CMS 17 details..."):
-                # The specialized prompt for researchers
-                prompt = f"""
-                You are a professional academic editor. Analyze this text for strict adherence to Chicago Manual of Style (17th Edition).
-                Focus on these minute details:
-                1. En-dashes (–) for page ranges (e.g., 15–25) instead of hyphens (-).
-                2. Punctuation MUST come before the footnote number (e.g., ."¹ or ,²).
-                3. Spell out numbers 0-100 (e.g., 'forty-two' not '42') unless they are part of a date or decimal.
-                4. Possessives for names ending in 's' (e.g., Jones's not Jones').
-                5. Block quote formatting for quotes over 100 words.
-
-                Text to analyze:
-                {text[:8000]} 
-
-                Format your response as a clear table with three columns: 
-                'Original Text' | 'Suggested Fix' | 'Why (CMS 17 Rule)'
-                """
-                
-                response = model.generate_content(prompt)
-                st.markdown("### 📋 Correction List")
-                st.write(response.text)
+if not api_key:
+    st.warning("Please enter your API Key in the sidebar to begin.")
 else:
-    st.warning("Please enter your Gemini API Key in the sidebar to start.")
-    st.divider()
-st.subheader("💡 Quick Tool: Footnote ↔ Bibliography")
-cite_input = st.text_input("Paste a citation here:")
-if cite_input:
-    cite_prompt = f"Convert this into both a Chicago 17 Footnote and a Bibliography entry: {cite_input}"
-    cite_res = model.generate_content(cite_prompt)
-    st.write(cite_res.text)
+    try:
+        genai.configure(api_key=api_key)
+        # CHANGED: Added 'models/' prefix which is more stable
+        model = genai.GenerativeModel('models/gemini-1.5-flash')
+        
+        uploaded_file = st.file_uploader("Upload your PDF paper", type="pdf")
+
+        if uploaded_file:
+            if st.button("Run 10x Audit"):
+                with st.spinner("Analyzing..."):
+                    # Extract text
+                    with fitz.open(stream=uploaded_file.read(), filetype="pdf") as doc:
+                        text = "".join([page.get_text() for page in doc])
+                    
+                    # Limit text to avoid 'token' errors for long papers
+                    short_text = text[:8000] 
+                    
+                    prompt = f"Act as a CMS 17 editor. Find: 1. Hyphens instead of En-dashes (–) in ranges. 2. Footnote numbers before punctuation. 3. Numbers 0-100 not spelled out. Text: {short_text}"
+                    
+                    response = model.generate_content(prompt)
+                    st.markdown("### 📋 Results")
+                    st.write(response.text)
+                    
+    except Exception as e:
+        st.error(f"Connection Error: {e}")
+
+st.divider()
