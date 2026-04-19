@@ -6,8 +6,7 @@ st.set_page_config(page_title="CMS 17 Guardian")
 
 with st.sidebar:
     st.title("Settings")
-    api_key = st.text_input("Enter Gemini API Key", type="password")
-
+    api_key = st.secrets["GEMINI_KEY"]
 st.title("🎓 Chicago Style 17 Guardian")
 
 if not api_key:
