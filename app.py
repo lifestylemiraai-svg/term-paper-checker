@@ -17,7 +17,7 @@ else:
     try:
         genai.configure(api_key=api_key)
         # CHANGED: Added 'models/' prefix which is more stable
-        model = genai.GenerativeModel('models/gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
         
         uploaded_file = st.file_uploader("Upload your PDF paper", type="pdf")
 
